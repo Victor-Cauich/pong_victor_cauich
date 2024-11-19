@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:pong_victor_cauich/ball.dart';
 import 'package:pong_victor_cauich/brick.dart';
 import 'package:pong_victor_cauich/coverscreen.dart';
+import 'package:pong_victor_cauich/score.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -20,12 +21,12 @@ class _HomepageState extends State<HomePage> {
   // variables de jugador (ladrillo inferior)
   double playerX = -0.2;
   double brickWidth = 0.4; // out of 2
+  int playerScore = 0;
 
   // variables del enemigo (top brick)
 
   double enemyX = -0.2;
-
-
+  int enemyScore = 0;
 
    // variables de la pelota
    double ballX = 0;
@@ -50,10 +51,32 @@ class _HomepageState extends State<HomePage> {
 
       //revisar si el jugador perdio
       if(isPlayerDead()){
+        enemyScore++;
         timer.cancel();
-        _showDialog();
+        _showDialog(false);
       }
+
+      if(isEnemyIsDead()){
+        playerScore++;
+        timer.cancel();
+        _showDialog(true);
+      }
+
     });
+  }
+
+  bool isEnemyIsDead(){
+    if(ballY <= -1){
+      return true;
+    }
+    return false;
+  }
+
+  bool isPlayerDead(){
+    if(ballY >= 1){
+      return true;
+    }
+    return false;
   }
 
   void moveEnemy(){
@@ -63,7 +86,7 @@ class _HomepageState extends State<HomePage> {
   }
 
 
-  void _showDialog(){ // mostrar dialogo cuando el jugador pierde
+  void _showDialog(bool enemyDied){ // mostrar dialogo cuando el jugador pierde
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -71,7 +94,8 @@ class _HomepageState extends State<HomePage> {
         return AlertDialog(
           backgroundColor: Colors.deepPurple,
           title: Center(
-            child: Text("PURPLE WIN",
+            child: Text(
+              enemyDied ? "BLUE WIN" : "PURPLE WIN",
             style: TextStyle(color: Colors.white),
             ),
           ),
@@ -82,10 +106,14 @@ class _HomepageState extends State<HomePage> {
                 borderRadius: BorderRadius.circular(5),
                 child: Container(
                   padding: EdgeInsets.all(7),
-                  color: Colors.deepPurple[100],
+                  color: enemyDied 
+                  ? Colors.blue[700]
+                  : Colors.deepPurple[100],
                   child: Text(
                     "PLAY AGAIN",
-                    style: TextStyle(color: Colors.deepPurple[800]),
+                    style: TextStyle(color: enemyDied 
+                    ?Colors.blue[700]
+                    :Colors.deepPurple[800]),
                 ),
               ),
             )
@@ -100,16 +128,10 @@ class _HomepageState extends State<HomePage> {
     Navigator.pop(context);
     setState(() {
       gameHasStarted = false;
-      ballX = 0; ballY = 0; 
-      playerX = -0.2;
+      ballX = 0; ballY = 0; // resetear la posicion de la pelota
+      playerX = -0.2; // resetear la posicion del jugador
+      enemyX = -0.2; // resetear la posicion del enemigo
     });
-  }
-
-  bool isPlayerDead(){
-    if(ballY >= 1){
-      return true;
-    }
-    return false;
   }
 
   void updateDirection(){ // actualizar la direccion de la pelota
@@ -151,14 +173,20 @@ class _HomepageState extends State<HomePage> {
   }
 
   void moveLeft(){
-    setState(() {
-      playerX -= 0.1;
+    setState(() { // evitar que el jugador se salga de la pantalla del lado izquierdo
+      if(!(playerX -0.1 <= -1)){ 
+        playerX -= 0.1;
+      }
+      
     });
   }
 
   void moveRight(){
-    setState(() {
-      playerX += 0.1;
+    setState(() { // evitar que el jugador se salga de la pantalla del lado derecho
+      if(!(playerX + brickWidth >= 1)){
+        playerX += 0.1;
+      }
+      
     });
   }
 
@@ -186,18 +214,27 @@ class _HomepageState extends State<HomePage> {
               Coverscreen(
                 gameHasStarted: gameHasStarted,
               ),
+
+              // pantalla de la puntuacion (score)
+              ScoreScreen(
+                gameHasStarted: gameHasStarted,
+                enemyScore: enemyScore,
+                playerScore: playerScore,
+              ),
               
-              // top brick
+              // enemigo top brick
               MyBrick(
                 x: enemyX,
                 y: -0.9, //posicion de la barra superior
                 brickWidth: brickWidth,
+                thisIsEnemy: true,
               ),
         
-              // buttom brick
+              // jugador buttom brick
               MyBrick(
                 x: playerX, y: 0.9, //posicion de la barra inferior
                 brickWidth: brickWidth,
+                thisIsEnemy: false,
                ),
         
               //pelota
