@@ -1,7 +1,5 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:pong_victor_cauich/ball.dart';
 import 'package:pong_victor_cauich/brick.dart';
 import 'package:pong_victor_cauich/coverscreen.dart';
@@ -109,16 +107,16 @@ class _HomepageState extends State<HomePage> {
                   color: enemyDied 
                   ? Colors.blue[700]
                   : Colors.deepPurple[100],
-                  child: Text(
+                    child:Text(
                     "PLAY AGAIN",
                     style: TextStyle(color: enemyDied 
                     ?Colors.blue[700]
                     :Colors.deepPurple[800]),
-                ),
+                  ),
               ),
             )
           )
-          ],
+        ],
         );
       }
     );
@@ -191,60 +189,62 @@ class _HomepageState extends State<HomePage> {
   }
 
 
-  @override
-  Widget build(BuildContext context) {
-    return RawKeyboardListener(
-      focusNode: FocusNode(),
-      onKey: (event){
-        if (event.isKeyPressed(LogicalKeyboardKey.arrowLeft)){
-          moveLeft();
+   // cambios en el codigo 
 
-        }else if (event.isKeyPressed(LogicalKeyboardKey.arrowRight)){
-          moveRight();
-        }
-      },
-      child: GestureDetector(
-        onTap: startGame,
-        child: Scaffold(
-          backgroundColor: Colors.grey[900], // fondo de la aplicación
-          body: Center(
-            child: Stack(
-              children: [
-              // tap to play
-              Coverscreen(
-                gameHasStarted: gameHasStarted,
-              ),
 
-              // pantalla de la puntuacion (score)
-              ScoreScreen(
-                gameHasStarted: gameHasStarted,
-                enemyScore: enemyScore,
-                playerScore: playerScore,
-              ),
-              
-              // enemigo top brick
-              MyBrick(
-                x: enemyX,
-                y: -0.9, //posicion de la barra superior
-                brickWidth: brickWidth,
-                thisIsEnemy: true,
-              ),
-        
-              // jugador buttom brick
-              MyBrick(
-                x: playerX, y: 0.9, //posicion de la barra inferior
-                brickWidth: brickWidth,
-                thisIsEnemy: false,
-               ),
-        
-              //pelota
-              MyBall(
-                x: ballX, y: ballY // posicion de la pelota
-              ),
+
+   @override
+Widget build(BuildContext context) {
+  return GestureDetector(
+    // Inicia el juego al tocar la pantalla
+    onTap: startGame,
+
+    // Detecta el deslizamiento horizontal
+    onHorizontalDragUpdate: (details) {
+      if (details.delta.dx > 0) {
+        moveRight(); // Deslizamiento hacia la derecha
+      } else if (details.delta.dx < 0) {
+        moveLeft(); // Deslizamiento hacia la izquierda
+      }
+    },
+
+    child: Scaffold(
+      backgroundColor: Colors.grey[900], // fondo de la aplicación
+      body: Center(
+        child: Stack(
+          children: [
+            // tap to play
+            Coverscreen(
+              gameHasStarted: gameHasStarted,
+            ),
+
+            // pantalla de la puntuacion (score)
+            ScoreScreen(
+              gameHasStarted: gameHasStarted,
+              enemyScore: enemyScore,
+              playerScore: playerScore,
+            ),
+
+            // enemigo top brick
+            MyBrick(
+              x: enemyX,
+              y: -0.9, // posicion de la barra superior
+              brickWidth: brickWidth,
+              thisIsEnemy: true,
+            ),
+
+            // jugador buttom brick
+            MyBrick(
+              x: playerX,
+              y: 0.9, // posicion de la barra inferior
+              brickWidth: brickWidth,
+              thisIsEnemy: false,
+            ),
+
+            // pelota
+            MyBall(x: ballX, y: ballY), // posicion de la pelota
             ],
           ),
-        )
-        
         ),
       ),
     );
