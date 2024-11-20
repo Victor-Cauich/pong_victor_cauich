@@ -1,248 +1,196 @@
-import 'dart:async';
-import 'package:flutter/material.dart';
-import 'package:pong_victor_cauich/ball.dart';
-import 'package:pong_victor_cauich/brick.dart';
-import 'package:pong_victor_cauich/coverscreen.dart';
-import 'package:pong_victor_cauich/score.dart';
+import 'dart:async'; // librería para trabajar con temporizadores 
+import 'package:flutter/material.dart'; // librería Flutter para diseño de interfaces.
+import 'package:pong_victor_cauich/ball.dart'; // Importa el archivo ball.dart
+import 'package:pong_victor_cauich/brick.dart'; // Importa el archivo brick.dart
+import 'package:pong_victor_cauich/coverscreen.dart'; // Importa el archivo coverscreen.dart
+import 'package:pong_victor_cauich/score.dart'; // Importa el archivo score.dart
 
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+class HomePage extends StatefulWidget { // clase Home que extiende un widget estatico
+  const HomePage({super.key}); // Constructor de la clase `HomePage`.
 
   @override
-  State<HomePage> createState() => _HomepageState();
+  State<HomePage> createState() => _HomepageState(); // Crea el estado asociado a esta página.
 }
 
-enum direction {UP, DOWN, LEFT, RIGHT} // direcciones
+enum direction { UP, DOWN, LEFT, RIGHT } // Enum para representar direcciones de movimiento.
 
 class _HomepageState extends State<HomePage> {
+  // Variables para el ladrillo del jugador (inferior).
+  double playerX = -0.2; // Posición inicial del jugador.
+  double brickWidth = 0.4; // Ancho del ladrillo
+  int playerScore = 0; // Puntuación del jugador.
 
-  // variables de jugador (ladrillo inferior)
-  double playerX = -0.2;
-  double brickWidth = 0.4; // out of 2
-  int playerScore = 0;
+  // Variables para el ladrillo enemigo (superior).
+  double enemyX = -0.2; // Posición inicial del enemigo.
+  int enemyScore = 0; // Puntuación del enemigo.
 
-  // variables del enemigo (top brick)
+  // Variables de la pelota.
+  double ballX = 0; // Posición horizontal inicial de la pelota.
+  double ballY = 0; // Posición vertical inicial de la pelota.
+  var ballYDirection = direction.DOWN; // Dirección vertical inicial de la pelota.
+  var ballXDirection = direction.LEFT; // Dirección horizontal inicial de la pelota.
 
-  double enemyX = -0.2;
-  int enemyScore = 0;
+  // Configuración del juego.
+  bool gameHasStarted = false; // Indica si el juego ha comenzado.
 
-   // variables de la pelota
-   double ballX = 0;
-   double ballY = 0;
-   var ballYDirection = direction.DOWN; // direccion vertical de la pelota
-   var ballXDirection = direction.LEFT; // direccion horizontal de la pelota
+  // Método para iniciar el juego.
+  void startGame() {
+    gameHasStarted = true; // Cambia el estado del juego a iniciado.
+    Timer.periodic(Duration(milliseconds: 1), (timer) { // Ejecuta un bucle cada milisegundo.
+      updateDirection(); // Actualiza la dirección de la pelota.
+      moveBall(); // Mueve la pelota.
+      moveEnemy(); // Mueve el ladrillo enemigo.
 
-   //game settings
-   bool gameHasStarted = false;
-
-  void startGame(){
-    gameHasStarted = true;
-    Timer.periodic(Duration(milliseconds: 1), (timer){
-      // actualizar direccion 
-      updateDirection();
-
-      // mover pelota
-      moveBall();
-
-      // mover enemigo
-      moveEnemy();
-
-      //revisar si el jugador perdio
-      if(isPlayerDead()){
-        enemyScore++;
-        timer.cancel();
-        _showDialog(false);
+      if (isPlayerDead()) { // Verifica si el jugador perdió.
+        enemyScore++; // Incrementa el puntaje del enemigo.
+        timer.cancel(); // Detiene el temporizador.
+        _showDialog(false); // Muestra el diálogo de derrota.
       }
 
-      if(isEnemyIsDead()){
-        playerScore++;
-        timer.cancel();
-        _showDialog(true);
+      if (isEnemyIsDead()) { // Verifica si el enemigo perdió.
+        playerScore++; // Incrementa el puntaje del jugador.
+        timer.cancel(); // Detiene el temporizador.
+        _showDialog(true); // Muestra el diálogo de victoria.
       }
-
     });
   }
 
-  bool isEnemyIsDead(){
-    if(ballY <= -1){
-      return true;
-    }
-    return false;
+  // Verifica si el enemigo perdió.
+  bool isEnemyIsDead() { // el enemigo pierde si:
+    return ballY <= -1; // La pelota salió por la parte superior.
   }
 
-  bool isPlayerDead(){
-    if(ballY >= 1){
-      return true;
-    }
-    return false;
+  // Verifica si el jugador perdió.
+  bool isPlayerDead() { // el jugador muere si:
+    return ballY >= 1; // La pelota salió por la parte inferior.
   }
 
-  void moveEnemy(){
+  // Mueve el ladrillo enemigo 
+  void moveEnemy() { 
     setState(() {
-      enemyX = ballX;
+      enemyX = ballX; // El ladrillo enemigo sigue la posición de la pelota.
     });
   }
 
-
-  void _showDialog(bool enemyDied){ // mostrar dialogo cuando el jugador pierde
-    showDialog(
+  // Muestra un cuadro de diálogo cuando alguien pierde.
+  void _showDialog(bool enemyDied) { 
+    showDialog( 
       context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context){
+      barrierDismissible: false, // Evita cerrar el cuadro tocando fuera de él.
+      builder: (BuildContext context) {
         return AlertDialog(
-          backgroundColor: Colors.deepPurple,
-          title: Center(
-            child: Text(
-              enemyDied ? "BLUE WIN" : "PURPLE WIN",
-            style: TextStyle(color: Colors.white),
+          backgroundColor: Colors.deepPurple, // Fondo morado.
+          title: Center( // Centra el mensaje
+            child: Text( // texto
+              enemyDied ? "BLUE WIN" : "PURPLE WIN", // Mensaje de victoria o derrota dependiendo de quien perdio
+              style: TextStyle(color: Colors.white), // color blanco para el texto
             ),
           ),
           actions: [
-            GestureDetector(
-              onTap: resettGame,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(5),
-                child: Container(
-                  padding: EdgeInsets.all(7),
-                  color: enemyDied 
-                  ? Colors.blue[700]
-                  : Colors.deepPurple[100],
-                    child:Text(
-                    "PLAY AGAIN",
-                    style: TextStyle(color: enemyDied 
-                    ?Colors.blue[700]
-                    :Colors.deepPurple[800]),
+            GestureDetector( // Widget para detectar gestos
+              onTap: resettGame, // Reinicia el juego al tocar el botón.
+              child: ClipRRect( // Recortar widgets con esquinas redondeadas,
+                borderRadius: BorderRadius.circular(5), // Bordes redondeados.
+                child: Container( //Contenedor
+                  padding: EdgeInsets.all(7), // Margenes  a todos los lados
+                  color: enemyDied ? Colors.blue[700] : Colors.deepPurple[100], // Color del botón.
+                  child: Text( //texto
+                    "PLAY AGAIN", // Texto del botón.
+                    style: TextStyle( // dar estilo al texto
+                      color: enemyDied ? Colors.blue[700] : Colors.deepPurple[800], //darle color al texto dependiendo de quien gano
+                    ),
                   ),
+                ),
               ),
-            )
-          )
-        ],
+            ),
+          ],
         );
-      }
+      },
     );
   }
 
-  void resettGame(){
-    Navigator.pop(context);
+  // Reinicia el juego.
+  void resettGame() {
+    Navigator.pop(context); // Cierra el cuadro de diálogo.
+    setState(() { // establecer estado
+      gameHasStarted = false; // Restablece el estado del juego.
+      ballX = 0; ballY = 0; // Posición inicial de la pelota.
+      playerX = -0.2; // Restablece la osición inicial del jugador.
+      enemyX = -0.2; // Restablece la posición inicial del enemigo.
+    });
+  }
+
+  // Actualiza la dirección de la pelota dependiendo de su posición.
+  void updateDirection() {
+    setState(() { // establecer estado
+    //cuando la pelota toca un ladrillo
+      if (ballY >= 0.9 && playerX + brickWidth >= ballX && playerX <= ballX) { // si la pelota toca el ladrillo del jugador (superior)
+        ballYDirection = direction.UP; // Rebota hacia arriba.
+      } else if (ballY <= -0.9) { // si la pelota toca el ladrillo del enemigo (superior)
+        ballYDirection = direction.DOWN; // Rebota hacia abajo.
+      }
+
+      // cuando la pelota toca un borde
+      if (ballX >= 1) { //si la peliota toca el borde de la derecha
+        ballXDirection = direction.LEFT; // Rebota hacia la izquierda.
+      } else if (ballX <= -1) { // si la pelota toca el borde de la izquierda
+        ballXDirection = direction.RIGHT; // Rebota hacia la derecha.
+      }
+    });
+  }
+
+  // Mueve la pelota en la dirección actual.
+  void moveBall() {
+    setState(() { // establecer estado
+      ballY += (ballYDirection == direction.DOWN) ? 0.01 : -0.01; // Movimiento vertical.
+      ballX += (ballXDirection == direction.LEFT) ? -0.01 : 0.01; // Movimiento horizontal.
+    });
+  }
+
+  // evitar que el jugador se salga de los bordes
+  // Mueve el ladrillo del jugador hacia la izquierda.
+  void moveLeft() {
     setState(() {
-      gameHasStarted = false;
-      ballX = 0; ballY = 0; // resetear la posicion de la pelota
-      playerX = -0.2; // resetear la posicion del jugador
-      enemyX = -0.2; // resetear la posicion del enemigo
+      if (!(playerX - 0.1 <= -1)) { // si el jugador se sale del borde derecho
+        playerX -= 0.1; // posicionarlo antes del borde
+      }
     });
   }
 
-  void updateDirection(){ // actualizar la direccion de la pelota
+  // Mueve el ladrillo del jugador hacia la derecha.
+  void moveRight() {
     setState(() {
-
-      //actualizar direccion vertical
-      if(ballY >= 0.9 && playerX + brickWidth >= ballX && playerX <= ballX){
-      ballYDirection = direction.UP;
-    }else if(ballY <= -0.9){
-      ballYDirection = direction.DOWN;
-    } 
-
-    // actualizar direccion horizontal
-    if(ballX >= 1){
-      ballXDirection = direction.LEFT;
-    }else if(ballX <= -1){
-      ballXDirection = direction.RIGHT;
-    }
-    });
-  }
-
-  void moveBall(){
-    setState(() {
-
-      // movimiento vertical
-      if(ballYDirection == direction.DOWN){
-        ballY += 0.01;
-      }else if(ballYDirection == direction.UP){
-        ballY -= 0.01;
-      }
-
-      // movimiento horizontal
-      if(ballXDirection == direction.LEFT){
-        ballX -= 0.01;
-      }else if(ballXDirection == direction.RIGHT){
-        ballX += 0.01;
+      if (!(playerX + brickWidth >= 1)) { // si el jugador se sale del borde izquierdo
+        playerX += 0.1; // posicionarlo antes del borde
       }
     });
   }
 
-  void moveLeft(){
-    setState(() { // evitar que el jugador se salga de la pantalla del lado izquierdo
-      if(!(playerX -0.1 <= -1)){ 
-        playerX -= 0.1;
-      }
-      
-    });
-  }
-
-  void moveRight(){
-    setState(() { // evitar que el jugador se salga de la pantalla del lado derecho
-      if(!(playerX + brickWidth >= 1)){
-        playerX += 0.1;
-      }
-      
-    });
-  }
-
-
-   // cambios en el codigo 
-
-
-
-   @override
-Widget build(BuildContext context) {
-  return GestureDetector(
-    // Inicia el juego al tocar la pantalla
-    onTap: startGame,
-
-    // Detecta el deslizamiento horizontal
-    onHorizontalDragUpdate: (details) {
-      if (details.delta.dx > 0) {
-        moveRight(); // Deslizamiento hacia la derecha
-      } else if (details.delta.dx < 0) {
-        moveLeft(); // Deslizamiento hacia la izquierda
-      }
-    },
-
-    child: Scaffold(
-      backgroundColor: Colors.grey[900], // fondo de la aplicación
-      body: Center(
-        child: Stack(
-          children: [
-            // tap to play
-            Coverscreen(
-              gameHasStarted: gameHasStarted,
-            ),
-
-            // pantalla de la puntuacion (score)
-            ScoreScreen(
-              gameHasStarted: gameHasStarted,
-              enemyScore: enemyScore,
-              playerScore: playerScore,
-            ),
-
-            // enemigo top brick
-            MyBrick(
-              x: enemyX,
-              y: -0.9, // posicion de la barra superior
-              brickWidth: brickWidth,
-              thisIsEnemy: true,
-            ),
-
-            // jugador buttom brick
-            MyBrick(
-              x: playerX,
-              y: 0.9, // posicion de la barra inferior
-              brickWidth: brickWidth,
-              thisIsEnemy: false,
-            ),
-
-            // pelota
-            MyBall(x: ballX, y: ballY), // posicion de la pelota
+  @override
+  Widget build(BuildContext context) { // // Sobrescribe el método build para construir la interfaz grafica del widget
+    return GestureDetector( // // Detecta gestos realizados por el jugador
+      onTap: startGame, // Inicia el juego al tocar la pantalla.
+      onHorizontalDragUpdate: (details) { // Detecta deslizamientos horizontales.
+        if (details.delta.dx > 0) { // Si el deslizamiento es hacia la derecha
+          moveRight(); // Se mueve el jugador a la derecha
+        } else if (details.delta.dx < 0) {// Si el deslizamiento es hacia la izquierda
+          moveLeft(); // Se mueve el ljugador a la izquierda
+        }
+      },
+      child: Scaffold( // Estructura del diseño de la aplicación
+        backgroundColor: Colors.grey[900], // Fondo gris oscuro.
+        body: Center( //centrar el contenido
+          child: Stack( // Superpone widgets en capas
+            children: [
+              Coverscreen(gameHasStarted: gameHasStarted), // Pantalla inicial.
+              ScoreScreen(
+                gameHasStarted: gameHasStarted, // Indica si el marcador debe estar visible.
+                enemyScore: enemyScore, // score del enemigo
+                playerScore: playerScore, // score del jugador
+              ),
+              MyBrick(x: enemyX, y: -0.9, brickWidth: brickWidth, thisIsEnemy: true), // Posicion del ladrillo enemigo.
+              MyBrick(x: playerX, y: 0.9, brickWidth: brickWidth, thisIsEnemy: false), // Posicion del ladrillo del jugador.
+              MyBall(x: ballX, y: ballY), // Posicion de la elota.
             ],
           ),
         ),
